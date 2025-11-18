@@ -167,3 +167,12 @@ __marimo__/
 
 # WhereWOL-specific (DO NOT PUBLISH PRIVATE KEYS)
 keys/*.pem
+
+# Archives / exports
+*.zip
+*.7z
+*.rar
+dist/
+build/
+export/
+web_exports/
