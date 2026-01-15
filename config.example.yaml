@@ -1,0 +1,30 @@
+# ============================================
+# WhereWOL Configuration Example
+# ============================================
+# Copy this file to config.yaml and customize.
+# NOTE: This file is for documentation purposes.
+# The CLI uses command-line arguments by default.
+# ============================================
+
+# Agent settings (runs on target PC)
+agent:
+  host: "0.0.0.0"           # Listen on all interfaces
+  port: 5000                # Agent port
+  mac_address: "AA:BB:CC:DD:EE:FF"  # Your PC's MAC address
+  shutdown_delay: 5         # Seconds before shutdown
+
+# Web UI settings (control panel)
+webui:
+  host: "0.0.0.0"
+  port: 5050
+  # Password: Set via WHEREWOL_PASSWORD environment variable
+  # Example: export WHEREWOL_PASSWORD="your-secure-password"
+
+# Key paths
+keys:
+  private: "./keys/private.pem"  # Keep secret! (controller side)
+  public: "./keys/public.pem"    # Copy to target PC (agent side)
+
+# Target agent URL (for CLI and WebUI)
+target:
+  agent_url: "http://192.168.0.50:5000"

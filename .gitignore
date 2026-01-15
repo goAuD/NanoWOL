@@ -167,6 +167,7 @@ __marimo__/
 
 # WhereWOL-specific (DO NOT PUBLISH PRIVATE KEYS)
 keys/*.pem
+config.yaml
 
 # Archives / exports
 *.zip
