@@ -49,21 +49,25 @@ def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem"
     python_exe = get_python_executable()
     script_path = get_script_path()
     
-    # Create XML for task
+    # Create XML for task - S4U allows running without storing password
+    import getpass
+    username = getpass.getuser()
+    
     task_xml = f'''<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
     <Description>NanoWOL Agent - Remote power control service</Description>
   </RegistrationInfo>
   <Triggers>
-    <BootTrigger>
+    <LogonTrigger>
       <Enabled>true</Enabled>
-    </BootTrigger>
+    </LogonTrigger>
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <LogonType>ServiceAccount</LogonType>
-      <RunLevel>HighestAvailable</RunLevel>
+      <UserId>{username}</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
     </Principal>
   </Principals>
   <Settings>
@@ -99,13 +103,19 @@ def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem"
     xml_path.write_text(task_xml, encoding='utf-16')
     
     try:
-        # Create the task
-        result = subprocess.run([
-            "schtasks", "/create",
-            "/tn", SERVICE_NAME,
-            "/xml", str(xml_path),
-            "/f"  # Force overwrite
-        ], capture_output=True, text=True)
+        # Create the task - use encoding to handle non-English Windows
+        result = subprocess.run(
+            [
+                "schtasks", "/create",
+                "/tn", SERVICE_NAME,
+                "/xml", str(xml_path),
+                "/f"  # Force overwrite
+            ],
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='ignore'
+        )
         
         if result.returncode == 0:
             logger.info(f"Windows task '{SERVICE_NAME}' installed successfully")
@@ -122,11 +132,13 @@ def uninstall_windows_task() -> bool:
     if not IS_WINDOWS:
         return False
     
-    result = subprocess.run([
-        "schtasks", "/delete",
-        "/tn", SERVICE_NAME,
-        "/f"
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        ["schtasks", "/delete", "/tn", SERVICE_NAME, "/f"],
+        capture_output=True,
+        text=True,
+        encoding='utf-8',
+        errors='ignore'
+    )
     
     if result.returncode == 0:
         logger.info(f"Windows task '{SERVICE_NAME}' removed")
@@ -141,12 +153,13 @@ def get_windows_task_status() -> dict:
     if not IS_WINDOWS:
         return {"installed": False, "platform": "not windows"}
     
-    result = subprocess.run([
-        "schtasks", "/query",
-        "/tn", SERVICE_NAME,
-        "/fo", "CSV",
-        "/nh"
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        ["schtasks", "/query", "/tn", SERVICE_NAME, "/fo", "CSV", "/nh"],
+        capture_output=True,
+        text=True,
+        encoding='utf-8',
+        errors='ignore'
+    )
     
     if result.returncode == 0:
         return {"installed": True, "status": "ready", "output": result.stdout.strip()}
