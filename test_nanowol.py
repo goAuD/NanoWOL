@@ -1,17 +1,22 @@
 """
 NanoWOL Unit Tests
-Tests for crypto, WOL, and utility functions.
-Run with: python -m pytest test_NanoWOL.py -v
-Or: python test_NanoWOL.py
+Tests for crypto, WOL, service, and utility functions.
+Run with: python -m pytest test_nanowol.py -v
+Or: python test_nanowol.py
 """
 
 import unittest
 import tempfile
 import os
+import sys
 from pathlib import Path
 
 from crypto import generate_key_pair, load_private_key, load_public_key, sign_message, verify_signature
 from wol import validate_mac, normalize_mac, send_wol_packet
+from service import (
+    IS_WINDOWS, IS_LINUX, IS_MACOS,
+    get_platform_name, get_service_status
+)
 
 
 class TestCrypto(unittest.TestCase):
@@ -100,6 +105,35 @@ class TestWOL(unittest.TestCase):
             send_wol_packet("AA:BB:CC")  # Too short
 
 
+class TestService(unittest.TestCase):
+    """Tests for service module."""
+    
+    def test_platform_detection(self):
+        """Test that exactly one platform is detected."""
+        platforms = [IS_WINDOWS, IS_LINUX, IS_MACOS]
+        # Exactly one should be True (or none if unsupported platform)
+        self.assertLessEqual(sum(platforms), 1)
+    
+    def test_get_platform_name(self):
+        """Test platform name returns a string."""
+        name = get_platform_name()
+        self.assertIsInstance(name, str)
+        self.assertTrue(len(name) > 0)
+        
+        if IS_WINDOWS:
+            self.assertIn("Windows", name)
+        elif IS_LINUX:
+            self.assertIn("Linux", name)
+        elif IS_MACOS:
+            self.assertIn("macOS", name)
+    
+    def test_get_service_status_returns_dict(self):
+        """Test service status returns a dictionary."""
+        status = get_service_status()
+        self.assertIsInstance(status, dict)
+        self.assertIn("installed", status)
+
+
 class TestTraceDecorator(unittest.TestCase):
     """Tests for trace_execution decorator."""
     
@@ -127,4 +161,5 @@ class TestTraceDecorator(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 

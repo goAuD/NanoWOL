@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
 NanoWOL – Secure Remote Wake-on-LAN & Shutdown Controller
-Version 1.1.0 | Part of the Nano Product Family
+Version 1.2.0 | Part of the Nano Product Family
 
 A modular CLI tool for remote PC power management with RSA authentication.
 
 Commands:
-    keygen   - Generate RSA key pair
-    agent    - Start the agent server on target PC
-    wake     - Send Wake-on-LAN magic packet
-    shutdown - Send signed shutdown command
-    webui    - Start the web control panel
+    keygen          - Generate RSA key pair
+    agent           - Start the agent server on target PC
+    wake            - Send Wake-on-LAN magic packet
+    shutdown        - Send signed shutdown command
+    webui           - Start the web control panel
+    install-service - Install agent as system service
+    uninstall-service - Remove agent service
+    service-status  - Check service status
 
 Usage:
-    python NanoWOL.py keygen
-    python NanoWOL.py agent --mac AA:BB:CC:DD:EE:FF
-    python NanoWOL.py wake --target http://192.168.0.50:5000
-    python NanoWOL.py shutdown --target http://192.168.0.50:5000
-    python NanoWOL.py webui --target http://192.168.0.50:5000
+    python nanowol.py keygen
+    python nanowol.py agent --mac AA:BB:CC:DD:EE:FF
+    python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
+    python nanowol.py wake --target http://192.168.0.50:5000
+    python nanowol.py shutdown --target http://192.168.0.50:5000
+    python nanowol.py webui --target http://192.168.0.50:5000
 """
 
 import sys
@@ -31,6 +35,7 @@ from crypto import generate_key_pair, load_private_key, sign_message
 from wol import send_wol_packet
 from agent import create_agent_app, DEFAULT_AGENT_PORT
 from webui import create_webui_app, generate_password, DEFAULT_WEBUI_PORT
+from service import install_service, uninstall_service, get_service_status, get_platform_name
 
 # Configure logging
 logging.basicConfig(
@@ -39,7 +44,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 # =============================================================================
@@ -94,7 +99,7 @@ def agent(host: str, port: int, mac: str, public_key: str, shutdown_delay: int):
     
     if not public_key_path.exists():
         click.echo(click.style(f"Error: Public key not found: {public_key}", fg="red"))
-        click.echo("  Run 'NanoWOL keygen' first, then copy public.pem to this machine.")
+        click.echo("  Run 'nanowol keygen' first, then copy public.pem to this machine.")
         sys.exit(1)
     
     click.echo(click.style("NanoWOL Agent", fg="cyan", bold=True))
@@ -145,7 +150,7 @@ def shutdown(target: str, private_key: str, close_port: bool):
     
     if not private_key_path.exists():
         click.echo(click.style(f"Error: Private key not found: {private_key}", fg="red"))
-        click.echo("  Run 'NanoWOL keygen' first.")
+        click.echo("  Run 'nanowol keygen' first.")
         sys.exit(1)
     
     click.echo(f"Sending shutdown command to {target}...")
@@ -177,7 +182,7 @@ def shutdown(target: str, private_key: str, close_port: bool):
 @click.option("--port", default=DEFAULT_WEBUI_PORT, help="Port to listen on")
 @click.option("--target", required=True, help="Agent URL (e.g., http://192.168.0.50:5000)")
 @click.option("--private-key", default="./keys/private.pem", help="Path to private key")
-@click.option("--password", envvar="NanoWOL_PASSWORD", help="Access password (or set NanoWOL_PASSWORD env var)")
+@click.option("--password", envvar="NANOWOL_PASSWORD", help="Access password (or set NANOWOL_PASSWORD env var)")
 def webui(host: str, port: int, target: str, private_key: str, password: str):
     """Start the web control panel."""
     private_key_path = Path(private_key)
@@ -190,7 +195,7 @@ def webui(host: str, port: int, target: str, private_key: str, password: str):
     
     if not private_key_path.exists():
         click.echo(click.style(f"Warning: Private key not found: {private_key}", fg="yellow"))
-        click.echo("  Shutdown commands will not work. Run 'NanoWOL keygen' first.")
+        click.echo("  Shutdown commands will not work. Run 'nanowol keygen' first.")
         click.echo()
     
     click.echo(click.style("NanoWOL Web UI", fg="cyan", bold=True))
@@ -206,9 +211,72 @@ def webui(host: str, port: int, target: str, private_key: str, password: str):
 
 
 # =============================================================================
+# SERVICE COMMANDS
+# =============================================================================
+
+@cli.command("install-service")
+@click.option("--mac", required=True, help="MAC address for WOL (format: AA:BB:CC:DD:EE:FF)")
+@click.option("--public-key", default="./keys/public.pem", help="Path to public key")
+def install_service_cmd(mac: str, public_key: str):
+    """Install agent as a system service (auto-start on boot)."""
+    click.echo(click.style("NanoWOL Service Installer", fg="cyan", bold=True))
+    click.echo(f"  Platform: {get_platform_name()}")
+    click.echo(f"  MAC:      {mac}")
+    click.echo()
+    
+    public_key_path = Path(public_key)
+    if not public_key_path.exists():
+        click.echo(click.style(f"Error: Public key not found: {public_key}", fg="red"))
+        click.echo("  Run 'nanowol keygen' first.")
+        sys.exit(1)
+    
+    click.echo("Installing service...")
+    if install_service(mac, public_key):
+        click.echo(click.style("Service installed successfully!", fg="green"))
+        click.echo()
+        click.echo("The agent will now start automatically on system boot.")
+        click.echo("Use 'nanowol service-status' to check the status.")
+    else:
+        click.echo(click.style("Failed to install service.", fg="red"))
+        sys.exit(1)
+
+
+@cli.command("uninstall-service")
+def uninstall_service_cmd():
+    """Remove the agent system service."""
+    click.echo(click.style("NanoWOL Service Uninstaller", fg="cyan", bold=True))
+    click.echo(f"  Platform: {get_platform_name()}")
+    click.echo()
+    
+    click.echo("Removing service...")
+    if uninstall_service():
+        click.echo(click.style("Service removed successfully!", fg="green"))
+    else:
+        click.echo(click.style("Service not found or could not be removed.", fg="yellow"))
+
+
+@cli.command("service-status")
+def service_status_cmd():
+    """Check the status of the agent service."""
+    click.echo(click.style("NanoWOL Service Status", fg="cyan", bold=True))
+    click.echo(f"  Platform: {get_platform_name()}")
+    click.echo()
+    
+    status = get_service_status()
+    
+    if status.get("installed"):
+        click.echo(click.style(f"  Status: {status.get('status', 'unknown')}", fg="green"))
+    else:
+        click.echo(click.style("  Status: Not installed", fg="yellow"))
+        click.echo()
+        click.echo("Use 'nanowol install-service --mac XX:XX:XX:XX:XX:XX' to install.")
+
+
+# =============================================================================
 # ENTRY POINT
 # =============================================================================
 
 if __name__ == "__main__":
     cli()
+
 

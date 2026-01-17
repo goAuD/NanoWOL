@@ -6,7 +6,7 @@ NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA au
 
 ![Python](https://img.shields.io/badge/Made%20with-Python-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ![NanoWOL Screenshot](nanowol.png)
 
@@ -15,12 +15,14 @@ NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA au
 * **Secure Authentication:** RSA-2048 signed commands prevent unauthorized shutdowns
 * **Wake-on-LAN:** Send magic packets to wake remote machines
 * **Remote Shutdown:** Signed shutdown commands with optional port blocking
+* **Auto-Start Service:** Agent can run as a system service (starts on boot, no login required)
 * **Web UI:** Cyberpunk-styled control panel accessible from any browser
 * **CLI Tool:** Full command-line interface for scripting
-* **Modular:** Clean separation into crypto, WOL, agent, and webui modules
-* **Unit Tested:** Comprehensive test suite for core functionality
+* **Cross-Platform:** Windows (Task Scheduler), Linux (systemd), macOS (launchd)
+* **Modular:** Clean separation into crypto, WOL, agent, service, and webui modules
+* **Unit Tested:** 12 tests covering crypto, WOL, and service functionality
 
-> **Note:** Primarily tested on Windows. Linux should work but feedback welcome!
+> **Note:** Primarily tested on Windows. Linux/macOS should work but feedback welcome!
 
 ## Requirements
 
@@ -31,7 +33,7 @@ NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA au
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/NanoWOL.git
+git clone https://github.com/goAuD/NanoWOL.git
 cd NanoWOL
 
 # Install dependencies
@@ -42,50 +44,81 @@ pip install -r requirements.txt
 
 ### 1. Generate Keys
 ```bash
-python NanoWOL.py keygen
+python nanowol.py keygen
 ```
 
-### 2. Start Agent (on target PC)
+### 2. Install as Service (Recommended)
+```bash
+# On target PC - installs agent to start on boot (no login required)
+python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
+```
+
+### 3. Or Start Agent Manually
 ```bash
 # Copy public.pem to target PC, then:
-python NanoWOL.py agent --mac AA:BB:CC:DD:EE:FF --public-key ./keys/public.pem
+python nanowol.py agent --mac AA:BB:CC:DD:EE:FF --public-key ./keys/public.pem
 ```
 
-### 3. Start Web UI (on controller)
+### 4. Start Web UI (on controller)
 ```bash
-python NanoWOL.py webui --target http://192.168.0.50:5000
+python nanowol.py webui --target http://192.168.0.50:5000
 ```
 
-### 4. Or use CLI commands
+### 5. CLI Commands
 ```bash
 # Wake
-python NanoWOL.py wake --target http://192.168.0.50:5000
+python nanowol.py wake --target http://192.168.0.50:5000
 
 # Shutdown
-python NanoWOL.py shutdown --target http://192.168.0.50:5000
+python nanowol.py shutdown --target http://192.168.0.50:5000
+
+# Check service status
+python nanowol.py service-status
 ```
 
-## Project Structure (v1.1.0)
+## Project Structure (v1.2.0)
 
 ```
 NanoWOL/
-├── NanoWOL.py        # CLI entry point
+├── nanowol.py         # CLI entry point
 ├── crypto.py          # RSA key operations
 ├── wol.py             # Wake-on-LAN logic
 ├── agent.py           # Agent Flask server
 ├── webui.py           # Web UI Flask server
+├── service.py         # Cross-platform service installation
 ├── templates/
 │   └── index.html     # Cyberpunk web template
-├── test_NanoWOL.py   # Unit tests
+├── test_nanowol.py    # Unit tests (12 tests)
 └── requirements.txt   # Dependencies
+```
+
+## Service Installation
+
+NanoWOL can install itself as a system service to auto-start on boot:
+
+| Platform | Method | Requires Login |
+|----------|--------|----------------|
+| Windows | Task Scheduler (Boot trigger) | No |
+| Linux | systemd user service | No |
+| macOS | launchd user agent | No |
+
+```bash
+# Install
+python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
+
+# Uninstall
+python nanowol.py uninstall-service
+
+# Check status
+python nanowol.py service-status
 ```
 
 ## Running Tests
 
 ```bash
-python test_NanoWOL.py
+python test_nanowol.py
 # or
-python -m pytest test_NanoWOL.py -v
+python -m pytest test_nanowol.py -v
 ```
 
 ## Security
@@ -102,4 +135,3 @@ This tool uses the [Nano Design System](https://github.com/goAuD/NanoServer/blob
 ## License
 
 MIT License
-
