@@ -386,7 +386,8 @@
                         Authentication
                     </label>
                     <input type="password" name="password" class="password-input" 
-                           placeholder="Enter access password" required>
+                           placeholder="Enter access password" required
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();}">
                 </div>
 
                 <div class="actions">
@@ -415,7 +416,7 @@
 
         <footer class="footer">
             <span class="status-dot"></span>
-            NanoWOL v1.1.0 | Nano Product Family
+            NanoWOL v1.2.0 | Nano Product Family
         </footer>
     </div>
 </body>

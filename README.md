@@ -24,6 +24,61 @@ NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA au
 
 > **Note:** Primarily tested on Windows. Linux/macOS should work but feedback welcome!
 
+## Use Cases
+
+### IT Admin / Office Management
+Deploy NanoWOL agent on all company workstations. Admin can remotely:
+- **Wake** machines before work hours for updates
+- **Shutdown** all PCs at end of day (save power!)
+- No need to walk through the building
+
+**One-time setup (per machine):**
+```powershell
+# Run as Administrator on each workstation
+python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
+```
+
+**Daily admin scripts:**
+```powershell
+# wake_all.ps1 - Wake all office PCs
+$computers = @(
+    "http://192.168.0.101:5000",
+    "http://192.168.0.102:5000",
+    "http://192.168.0.103:5000"
+    # Add all workstation IPs...
+)
+
+foreach ($pc in $computers) {
+    Write-Host "Waking $pc..."
+    python nanowol.py wake --target $pc
+}
+```
+
+```powershell
+# shutdown_all.ps1 - Shutdown all office PCs
+foreach ($pc in $computers) {
+    Write-Host "Shutting down $pc..."
+    python nanowol.py shutdown --target $pc
+}
+```
+
+**Schedule with Task Scheduler:**
+- Wake script at 7:00 AM
+- Shutdown script at 6:00 PM
+
+### Home Lab / Server Room
+- Wake your NAS or home server remotely before accessing files
+- Shutdown after backup is complete
+- Control from phone via WebUI
+
+### Remote Work
+- Left your home PC on? Shutdown remotely
+- Need a file from home? Wake it, grab it, shut it down
+
+### Energy Saving
+- Scheduled shutdowns at night via scripts
+- Wake only when needed instead of 24/7 operation
+
 ## Requirements
 
 * Python 3.8+
