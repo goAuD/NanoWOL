@@ -1,12 +1,12 @@
-# WhereWOL Architecture
+# NanoWOL Architecture
 
-This document describes the technical architecture of WhereWOL.
+This document describes the technical architecture of NanoWOL.
 
 ---
 
 ## Overview
 
-WhereWOL is a secure remote power management tool consisting of two main components:
+NanoWOL is a secure remote power management tool consisting of two main components:
 
 1. **Agent** – A lightweight Flask server running on the target PC
 2. **Controller** – CLI commands or Web UI for sending commands
@@ -88,7 +88,7 @@ sequenceDiagram
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                     KEY GENERATION                            │
-│   $ python wherewol.py keygen                                │
+│   $ python NanoWOL.py keygen                                │
 │                        │                                      │
 │            ┌───────────┴───────────┐                         │
 │            ▼                       ▼                         │
@@ -169,10 +169,10 @@ sequenceDiagram
 
 ```powershell
 # Allow agent port
-netsh advfirewall firewall add rule name="WhereWOL Agent" dir=in action=allow protocol=TCP localport=5000
+netsh advfirewall firewall add rule name="NanoWOL Agent" dir=in action=allow protocol=TCP localport=5000
 
 # Optional: Block after shutdown
-netsh advfirewall firewall add rule name="BlockWhereWOL" dir=in action=block protocol=TCP localport=5000
+netsh advfirewall firewall add rule name="BlockNanoWOL" dir=in action=block protocol=TCP localport=5000
 ```
 
 ---
@@ -221,8 +221,8 @@ netsh advfirewall firewall add rule name="BlockWhereWOL" dir=in action=block pro
 ## File Structure
 
 ```
-wherewol/
-├── wherewol.py          # Single-file application
+NanoWOL/
+├── NanoWOL.py          # Single-file application
 │   ├── CLI Commands     # keygen, agent, wake, shutdown, webui
 │   ├── Crypto Utils     # RSA key generation, signing, verification
 │   ├── WOL Functions    # Magic packet creation and sending
@@ -253,3 +253,4 @@ wherewol/
 - [ ] Scheduled wake/shutdown
 - [ ] Docker deployment
 - [ ] systemd service file
+
