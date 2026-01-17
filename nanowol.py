@@ -180,10 +180,11 @@ def shutdown(target: str, private_key: str, close_port: bool):
 @cli.command()
 @click.option("--host", default="0.0.0.0", help="Host to bind to")
 @click.option("--port", default=DEFAULT_WEBUI_PORT, help="Port to listen on")
-@click.option("--target", required=True, help="Agent URL (e.g., http://192.168.0.50:5000)")
+@click.option("--target", required=True, help="Agent URL for shutdown (e.g., http://192.168.0.50:5000)")
+@click.option("--mac", required=True, help="Target MAC address for WOL (e.g., AA:BB:CC:DD:EE:FF)")
 @click.option("--private-key", default="./keys/private.pem", help="Path to private key")
 @click.option("--password", envvar="NANOWOL_PASSWORD", help="Access password (or set NANOWOL_PASSWORD env var)")
-def webui(host: str, port: int, target: str, private_key: str, password: str):
+def webui(host: str, port: int, target: str, mac: str, private_key: str, password: str):
     """Start the web control panel."""
     private_key_path = Path(private_key)
     
@@ -200,13 +201,14 @@ def webui(host: str, port: int, target: str, private_key: str, password: str):
     
     click.echo(click.style("NanoWOL Web UI", fg="cyan", bold=True))
     click.echo(f"  Target Agent: {target}")
+    click.echo(f"  Target MAC:   {mac}")
     click.echo(f"  Private Key:  {private_key_path}")
     click.echo()
     click.echo(f"Starting web UI on http://{host}:{port}")
     click.echo(click.style("Press Ctrl+C to stop", fg="yellow"))
     click.echo()
     
-    app = create_webui_app(target, private_key_path, password)
+    app = create_webui_app(target, private_key_path, password, mac)
     app.run(host=host, port=port, debug=False)
 
 
