@@ -183,6 +183,66 @@ python -m pytest test_nanowol.py -v
 * Optional firewall port blocking after shutdown
 * No cloud, fully offline capable
 
+## Troubleshooting
+
+### Agent not reachable (Connection Timeout)
+
+**Symptom:** `HTTPConnectionPool... Max retries exceeded`
+
+**Solutions:**
+1. **Check agent is running on target PC:**
+   ```powershell
+   netstat -an | findstr :5000
+   # Should show: TCP 0.0.0.0:5000 LISTENING
+   ```
+
+2. **Open firewall on target PC (Admin PowerShell):**
+   ```powershell
+   New-NetFirewallRule -DisplayName "NanoWOL Agent" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
+   ```
+
+3. **Test connectivity from controller:**
+   ```powershell
+   Test-NetConnection -ComputerName 192.168.0.50 -Port 5000
+   ```
+
+### Wake-on-LAN not working
+
+**Checklist:**
+- [ ] BIOS: Wake-on-LAN enabled
+- [ ] Network adapter: "Wake on Magic Packet" enabled (Device Manager → Network Adapter → Properties → Power Management)
+- [ ] PC plugged into power (not battery)
+- [ ] Ethernet cable connected (WiFi WOL rarely works)
+- [ ] Same LAN/subnet as controller
+
+**Test WOL manually:**
+```powershell
+python nanowol.py wake --target http://192.168.0.50:5000
+```
+
+### Service not starting after boot
+
+**Check service status:**
+```powershell
+python nanowol.py service-status
+schtasks /query /tn "NanoWOL-Agent" /v
+```
+
+**Manually start the task:**
+```powershell
+schtasks /run /tn "NanoWOL-Agent"
+```
+
+**Reinstall with admin mode (starts before login):**
+```powershell
+# Run as Administrator
+python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF --admin
+```
+
+### Unicode/Encoding errors on non-English Windows
+
+Upgrade to latest version - encoding issues have been fixed for Hungarian and other non-English Windows systems.
+
 ## Part of Nano Product Family
 
 This tool uses the [Nano Design System](https://github.com/goAuD/NanoServer/blob/main/DESIGN_SYSTEM.md) for consistent styling across lightweight developer tools.
@@ -190,3 +250,4 @@ This tool uses the [Nano Design System](https://github.com/goAuD/NanoServer/blob
 ## License
 
 MIT License
+
