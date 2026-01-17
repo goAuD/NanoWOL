@@ -217,11 +217,13 @@ def webui(host: str, port: int, target: str, private_key: str, password: str):
 @cli.command("install-service")
 @click.option("--mac", required=True, help="MAC address for WOL (format: AA:BB:CC:DD:EE:FF)")
 @click.option("--public-key", default="./keys/public.pem", help="Path to public key")
-def install_service_cmd(mac: str, public_key: str):
+@click.option("--admin", is_flag=True, help="Admin mode: start at boot without login (requires admin rights)")
+def install_service_cmd(mac: str, public_key: str, admin: bool):
     """Install agent as a system service (auto-start on boot)."""
     click.echo(click.style("NanoWOL Service Installer", fg="cyan", bold=True))
     click.echo(f"  Platform: {get_platform_name()}")
     click.echo(f"  MAC:      {mac}")
+    click.echo(f"  Mode:     {'Boot (no login needed)' if admin else 'Logon (after login)'}")
     click.echo()
     
     public_key_path = Path(public_key)
@@ -230,11 +232,18 @@ def install_service_cmd(mac: str, public_key: str):
         click.echo("  Run 'nanowol keygen' first.")
         sys.exit(1)
     
+    if admin:
+        click.echo(click.style("Note: Admin mode requires running PowerShell as Administrator", fg="yellow"))
+        click.echo()
+    
     click.echo("Installing service...")
-    if install_service(mac, public_key):
+    if install_service(mac, public_key, admin):
         click.echo(click.style("Service installed successfully!", fg="green"))
         click.echo()
-        click.echo("The agent will now start automatically on system boot.")
+        if admin:
+            click.echo("The agent will start automatically on system boot (no login needed).")
+        else:
+            click.echo("The agent will start automatically after you log in.")
         click.echo("Use 'nanowol service-status' to check the status.")
     else:
         click.echo(click.style("Failed to install service.", fg="red"))

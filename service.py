@@ -38,10 +38,15 @@ def get_script_path() -> Path:
 # WINDOWS
 # =============================================================================
 
-def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem") -> bool:
+def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem", admin_mode: bool = False) -> bool:
     """
     Install NanoWOL agent as a Windows Task Scheduler task.
-    Runs at system startup, before user login.
+    
+    Args:
+        mac_address: Target MAC address
+        public_key: Path to public key
+        admin_mode: If True, uses BootTrigger (no login needed, requires admin)
+                    If False, uses LogonTrigger (needs login, no admin needed)
     """
     if not IS_WINDOWS:
         return False
@@ -49,9 +54,28 @@ def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem"
     python_exe = get_python_executable()
     script_path = get_script_path()
     
-    # Create XML for task - S4U allows running without storing password
     import getpass
     username = getpass.getuser()
+    
+    if admin_mode:
+        # Admin mode: starts at boot, runs as SYSTEM (no login needed)
+        trigger_xml = """<BootTrigger>
+      <Enabled>true</Enabled>
+    </BootTrigger>"""
+        principal_xml = """<Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>"""
+    else:
+        # User mode: starts at logon (needs login, no admin needed)
+        trigger_xml = """<LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>"""
+        principal_xml = f"""<Principal id="Author">
+      <UserId>{username}</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>"""
     
     task_xml = f'''<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -59,16 +83,10 @@ def install_windows_task(mac_address: str, public_key: str = "./keys/public.pem"
     <Description>NanoWOL Agent - Remote power control service</Description>
   </RegistrationInfo>
   <Triggers>
-    <LogonTrigger>
-      <Enabled>true</Enabled>
-    </LogonTrigger>
+    {trigger_xml}
   </Triggers>
   <Principals>
-    <Principal id="Author">
-      <UserId>{username}</UserId>
-      <LogonType>InteractiveToken</LogonType>
-      <RunLevel>LeastPrivilege</RunLevel>
-    </Principal>
+    {principal_xml}
   </Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
@@ -350,10 +368,16 @@ def get_macos_service_status() -> dict:
 # CROSS-PLATFORM API
 # =============================================================================
 
-def install_service(mac_address: str, public_key: str = "./keys/public.pem") -> bool:
-    """Install the agent service on the current platform."""
+def install_service(mac_address: str, public_key: str = "./keys/public.pem", admin_mode: bool = False) -> bool:
+    """Install the agent service on the current platform.
+    
+    Args:
+        mac_address: Target MAC address
+        public_key: Path to public key
+        admin_mode: Windows only - if True, uses BootTrigger (no login needed, requires admin)
+    """
     if IS_WINDOWS:
-        return install_windows_task(mac_address, public_key)
+        return install_windows_task(mac_address, public_key, admin_mode)
     elif IS_LINUX:
         return install_linux_service(mac_address, public_key)
     elif IS_MACOS:
