@@ -1,0 +1,537 @@
+/**
+ * Nano Design System - WebUI Stylesheet
+ * =====================================
+ * Unified CSS for all Nano Product Family web interfaces.
+ * 
+ * Usage:
+ *   <link rel="stylesheet" href="nano-webui.css">
+ *   <link rel="stylesheet" href="your-app-styles.css">
+ * 
+ * Features:
+ *   - CSS Custom Properties (Variables) for easy theming
+ *   - Dark mode optimized
+ *   - Cyberpunk/Tech aesthetic
+ *   - Responsive utilities
+ *   - Component classes (buttons, cards, inputs, etc.)
+ * 
+ * Version: 1.0.0
+ * License: MIT
+ */
+
+/* ============================================
+   1. CSS VARIABLES (Design Tokens)
+   ============================================ */
+:root {
+    /* Background Colors */
+    --nano-bg-primary: #0a0a0f;
+    --nano-bg-secondary: #12121a;
+    --nano-bg-card: rgba(20, 20, 35, 0.8);
+    --nano-bg-input: rgba(0, 0, 0, 0.4);
+    --nano-bg-hover: rgba(255, 255, 255, 0.05);
+
+    /* Accent Colors */
+    --nano-cyan: #00f0ff;
+    --nano-cyan-dim: #00a0aa;
+    --nano-cyan-glow: rgba(0, 240, 255, 0.3);
+    --nano-magenta: #ff00aa;
+    --nano-green: #00ff88;
+    --nano-green-dim: #00cc6a;
+    --nano-red: #ff4466;
+    --nano-red-dim: #cc3355;
+    --nano-orange: #ff9900;
+    --nano-yellow: #ffcc00;
+    --nano-purple: #aa44ff;
+
+    /* Text Colors */
+    --nano-text-primary: #ffffff;
+    --nano-text-secondary: #8892a0;
+    --nano-text-muted: #505560;
+
+    /* Borders */
+    --nano-border-default: rgba(255, 255, 255, 0.1);
+    --nano-border-accent: rgba(0, 240, 255, 0.3);
+    --nano-border-radius-sm: 6px;
+    --nano-border-radius-md: 12px;
+    --nano-border-radius-lg: 16px;
+
+    /* Shadows & Glows */
+    --nano-shadow-card: 0 4px 30px rgba(0, 0, 0, 0.5);
+    --nano-glow-cyan: 0 0 30px rgba(0, 240, 255, 0.15);
+    --nano-glow-button: 0 0 25px rgba(0, 240, 255, 0.3);
+    --nano-glow-green: 0 0 30px rgba(0, 255, 136, 0.3);
+    --nano-glow-red: 0 0 30px rgba(255, 68, 102, 0.3);
+
+    /* Typography */
+    --nano-font-heading: 'Orbitron', 'Segoe UI', sans-serif;
+    --nano-font-body: 'Inter', 'Segoe UI', sans-serif;
+    --nano-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+    /* Transitions */
+    --nano-transition-fast: 0.15s ease;
+    --nano-transition-normal: 0.3s ease;
+    --nano-transition-slow: 0.5s ease;
+
+    /* Spacing */
+    --nano-spacing-xs: 4px;
+    --nano-spacing-sm: 8px;
+    --nano-spacing-md: 16px;
+    --nano-spacing-lg: 24px;
+    --nano-spacing-xl: 32px;
+}
+
+
+/* ============================================
+   2. BASE RESET & DEFAULTS
+   ============================================ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body.nano-theme {
+    font-family: var(--nano-font-body);
+    background: var(--nano-bg-primary);
+    color: var(--nano-text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+
+/* ============================================
+   3. ANIMATED GRID BACKGROUND
+   ============================================ */
+.nano-grid-bg::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: nano-grid-move 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.nano-grid-bg::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, var(--nano-bg-primary) 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes nano-grid-move {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+
+/* ============================================
+   4. TYPOGRAPHY
+   ============================================ */
+.nano-logo {
+    font-family: var(--nano-font-heading);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--nano-cyan), var(--nano-magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
+    letter-spacing: 0.1em;
+}
+
+.nano-logo-xl {
+    font-size: 2.5rem;
+}
+
+.nano-logo-lg {
+    font-size: 2rem;
+}
+
+.nano-logo-md {
+    font-size: 1.5rem;
+}
+
+.nano-subtitle {
+    font-size: 0.85rem;
+    color: var(--nano-text-secondary);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.nano-label {
+    font-size: 0.75rem;
+    color: var(--nano-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+}
+
+
+/* ============================================
+   5. CARD COMPONENT
+   ============================================ */
+.nano-card {
+    background: var(--nano-bg-card);
+    border: 1px solid var(--nano-border-accent);
+    border-radius: var(--nano-border-radius-lg);
+    padding: var(--nano-spacing-xl);
+    backdrop-filter: blur(20px);
+    box-shadow: var(--nano-glow-cyan);
+    position: relative;
+    overflow: hidden;
+}
+
+.nano-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--nano-cyan), var(--nano-magenta), transparent);
+}
+
+
+/* ============================================
+   6. BUTTON COMPONENTS
+   ============================================ */
+.nano-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--nano-spacing-sm);
+    padding: var(--nano-spacing-md) var(--nano-spacing-lg);
+    border: 1px solid var(--nano-border-default);
+    border-radius: var(--nano-border-radius-md);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(255, 0, 170, 0.05));
+    color: var(--nano-text-primary);
+    font-family: var(--nano-font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all var(--nano-transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Shine effect on hover */
+.nano-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left var(--nano-transition-slow);
+}
+
+.nano-btn:hover::before {
+    left: 100%;
+}
+
+.nano-btn:hover {
+    border-color: var(--nano-cyan);
+    box-shadow: var(--nano-glow-button);
+    transform: translateY(-2px);
+}
+
+.nano-btn:active {
+    transform: translateY(0);
+}
+
+/* Button variants */
+.nano-btn-success {
+    border-color: var(--nano-green);
+    color: var(--nano-green);
+}
+
+.nano-btn-success:hover {
+    border-color: var(--nano-green);
+    box-shadow: var(--nano-glow-green);
+}
+
+.nano-btn-danger {
+    border-color: var(--nano-red);
+    color: var(--nano-red);
+}
+
+.nano-btn-danger:hover {
+    border-color: var(--nano-red);
+    box-shadow: var(--nano-glow-red);
+}
+
+.nano-btn-primary {
+    background: var(--nano-cyan);
+    color: var(--nano-bg-primary);
+    border-color: var(--nano-cyan);
+}
+
+.nano-btn-primary:hover {
+    background: var(--nano-cyan-dim);
+}
+
+
+/* ============================================
+   7. INPUT COMPONENTS
+   ============================================ */
+.nano-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--nano-bg-input);
+    border: 1px solid var(--nano-border-accent);
+    border-radius: var(--nano-border-radius-sm);
+    color: var(--nano-text-primary);
+    font-size: 1rem;
+    font-family: var(--nano-font-body);
+    transition: all var(--nano-transition-normal);
+}
+
+.nano-input:focus {
+    outline: none;
+    border-color: var(--nano-cyan);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.nano-input::placeholder {
+    color: var(--nano-text-secondary);
+}
+
+.nano-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--nano-cyan);
+    cursor: pointer;
+}
+
+
+/* ============================================
+   8. TOAST / ALERT COMPONENTS
+   ============================================ */
+.nano-toast {
+    padding: var(--nano-spacing-md) var(--nano-spacing-lg);
+    border-radius: var(--nano-border-radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    animation: nano-slide-in 0.3s ease;
+}
+
+.nano-toast-success {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid var(--nano-green);
+    color: var(--nano-green);
+}
+
+.nano-toast-error {
+    background: rgba(255, 68, 102, 0.15);
+    border: 1px solid var(--nano-red);
+    color: var(--nano-red);
+}
+
+.nano-toast-warning {
+    background: rgba(255, 153, 0, 0.15);
+    border: 1px solid var(--nano-orange);
+    color: var(--nano-orange);
+}
+
+@keyframes nano-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ============================================
+   9. UTILITIES
+   ============================================ */
+.nano-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: var(--nano-spacing-md);
+}
+
+.nano-container-lg {
+    max-width: 800px;
+}
+
+.nano-container-xl {
+    max-width: 1200px;
+}
+
+.nano-text-center {
+    text-align: center;
+}
+
+.nano-text-left {
+    text-align: left;
+}
+
+.nano-text-right {
+    text-align: right;
+}
+
+.nano-flex {
+    display: flex;
+}
+
+.nano-flex-col {
+    flex-direction: column;
+}
+
+.nano-flex-center {
+    align-items: center;
+    justify-content: center;
+}
+
+.nano-flex-between {
+    justify-content: space-between;
+}
+
+.nano-gap-sm {
+    gap: var(--nano-spacing-sm);
+}
+
+.nano-gap-md {
+    gap: var(--nano-spacing-md);
+}
+
+.nano-gap-lg {
+    gap: var(--nano-spacing-lg);
+}
+
+.nano-grid {
+    display: grid;
+}
+
+.nano-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.nano-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.nano-mb-sm {
+    margin-bottom: var(--nano-spacing-sm);
+}
+
+.nano-mb-md {
+    margin-bottom: var(--nano-spacing-md);
+}
+
+.nano-mb-lg {
+    margin-bottom: var(--nano-spacing-lg);
+}
+
+
+/* ============================================
+   10. STATUS INDICATORS
+   ============================================ */
+.nano-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: nano-pulse 2s infinite;
+}
+
+.nano-status-dot-online {
+    background: var(--nano-green);
+}
+
+.nano-status-dot-offline {
+    background: var(--nano-red);
+}
+
+.nano-status-dot-warning {
+    background: var(--nano-orange);
+}
+
+@keyframes nano-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+
+/* ============================================
+   11. FOOTER
+   ============================================ */
+.nano-footer {
+    text-align: center;
+    margin-top: var(--nano-spacing-lg);
+    font-size: 0.75rem;
+    color: var(--nano-text-secondary);
+}
+
+.nano-footer a {
+    color: var(--nano-cyan-dim);
+    text-decoration: none;
+    transition: color var(--nano-transition-fast);
+}
+
+.nano-footer a:hover {
+    color: var(--nano-cyan);
+}
+
+
+/* ============================================
+   12. RESPONSIVE
+   ============================================ */
+@media (max-width: 600px) {
+    .nano-logo-xl {
+        font-size: 1.8rem;
+    }
+
+    .nano-card {
+        padding: var(--nano-spacing-lg);
+    }
+
+    .nano-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .nano-btn {
+        width: 100%;
+    }
+}
