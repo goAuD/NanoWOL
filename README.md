@@ -181,7 +181,9 @@ python -m pytest test_nanowol.py -v
 * RSA-2048 signatures for shutdown commands
 * Password-protected Web UI
 * Optional firewall port blocking after shutdown
-* No cloud, fully offline capable
+* Self-hosted, no cloud account or external service required
+
+> **Note:** NanoWOL works natively on LAN. For remote access over the internet, use VPN or Tailscale to connect to your network first.
 
 ## FAQ
 
@@ -233,7 +235,7 @@ With SSH, you're giving **full shell access**. With NanoWOL, the agent can **onl
 - The agent only accepts commands signed with the matching private key
 - Your private key **never leaves your controller** – only the public key is on target PCs
 - No passwords transmitted over network
-- No cloud dependency – fully offline capable
+- Self-hosted, no cloud account or external service required
 - Optional: firewall blocks the port after shutdown
 
 **Worst case scenario:** Someone sends a WOL packet → Your PC turns on. That's it. They can't shut it down without your private key.
