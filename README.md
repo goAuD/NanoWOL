@@ -183,6 +183,93 @@ python -m pytest test_nanowol.py -v
 * Optional firewall port blocking after shutdown
 * No cloud, fully offline capable
 
+## FAQ
+
+### Why do I need NanoWOL? I can just run `shutdown` on my PC!
+
+Yes, but **you need to be sitting at your PC** to do that. NanoWOL is for **remote** power management:
+
+| Situation | Simple `shutdown` | NanoWOL |
+|-----------|-------------------|---------|
+| Sitting at your PC | ✅ Works fine | Overkill |
+| Want to shut down remotely | ❌ Not possible | ✅ That's the point |
+| Want to **turn ON** remotely | ❌ Impossible | ✅ Wake-on-LAN |
+| Need secure authentication | ❌ Depends on RDP/SSH | ✅ RSA-2048 signed |
+
+**Real scenarios:**
+- Left your home PC running? Shut it down from your phone
+- Need a file from home? Wake PC → RDP in → grab file → shut down
+- IT admin with 50 office PCs? Script wake/shutdown instead of walking around
+
+### What is Wake-on-LAN (WOL)?
+
+Wake-on-LAN is a hardware feature that allows you to **turn on a completely powered-off PC** by sending a special "magic packet" over the network. The network card stays in low-power mode and listens for this packet even when the PC is off.
+
+**Requirements:**
+- WOL enabled in BIOS
+- "Wake on Magic Packet" enabled in network adapter settings
+- Ethernet connection (WiFi WOL rarely works)
+- PC plugged into power
+
+### Why not just use SSH + `shutdown` command?
+
+You could, but:
+
+| Aspect | SSH + shutdown | NanoWOL |
+|--------|----------------|---------|
+| Can wake PC? | ❌ No | ✅ Yes |
+| Needs credentials? | Yes (password/key) | No (RSA signature) |
+| Password travels over network? | Yes | No |
+| Setup complexity | SSH server + keys | One command |
+| Attack surface | Full shell access | Only wake/shutdown |
+
+With SSH, you're giving **full shell access**. With NanoWOL, the agent can **only** wake or shutdown – nothing else.
+
+### Is this a security risk?
+
+**No, it's designed to be secure:**
+
+- Shutdown commands require **RSA-2048 signatures**
+- The agent only accepts commands signed with the matching private key
+- Your private key **never leaves your controller** – only the public key is on target PCs
+- No passwords transmitted over network
+- No cloud dependency – fully offline capable
+- Optional: firewall blocks the port after shutdown
+
+**Worst case scenario:** Someone sends a WOL packet → Your PC turns on. That's it. They can't shut it down without your private key.
+
+### Does Wake-on-LAN work over WiFi?
+
+**Rarely.** Most WiFi adapters disable their radio completely when the PC is off (to save power), so they can't receive the magic packet.
+
+**Recommendation:** Use Ethernet for reliable WOL. This is a hardware limitation, not a NanoWOL issue.
+
+### Can I use this over the internet?
+
+**Not directly** – WOL uses UDP broadcast which doesn't route over the internet. Options:
+
+1. **VPN:** Connect to your home network via VPN, then use NanoWOL normally
+2. **Always-on device:** Have a Raspberry Pi or NAS running the agent 24/7, use it to wake other PCs
+
+### What's the typical home use case?
+
+1. **Gaming PC:** Wake it remotely so it's booted up by the time you get home
+2. **Energy saving:** Don't run your PC 24/7, wake only when needed
+3. **Media server/NAS:** Start on demand, shut down after use
+4. **"Oops" moments:** Forgot to turn off your PC? Fix it from anywhere
+
+### What's the typical IT/office use case?
+
+```powershell
+# 7:00 AM - Wake all workstations before staff arrives
+foreach ($pc in $workstations) { python nanowol.py wake --target $pc }
+
+# 6:00 PM - Shutdown everything (save power!)
+foreach ($pc in $workstations) { python nanowol.py shutdown --target $pc }
+```
+
+Schedule with Task Scheduler → Zero manual work, automatic energy savings.
+
 ## Troubleshooting
 
 ### Agent not reachable (Connection Timeout)
