@@ -89,8 +89,10 @@ The controller is where you send commands from.
 **Option A: Web UI (recommended)**
 
 ```bash
-python nanowol.py webui --target http://TARGET_IP:5000 --mac AA:BB:CC:DD:EE:FF --password yourpassword
+python nanowol.py webui --target http://TARGET_IP:5000 --mac AA:BB:CC:DD:EE:FF
 ```
+
+If you omit `--password`, a secure random password is generated and printed to the console.
 
 Then open `http://localhost:5050` in your browser.
 
