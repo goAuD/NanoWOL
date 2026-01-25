@@ -63,18 +63,72 @@ Schedule regular shutdowns and only wake systems when needed.
 
 ## Quick start
 
-1. Generate keys
+### Step 1: Generate RSA keys (on any machine, copy to both)
 
-   ```bash
-   python nanowol.py keygen
-   ```
-2. Run the help to view required options for each command
+```bash
+python nanowol.py keygen
+```
 
-   ```bash
-   python nanowol.py
-   ```
-3. Start the agent on the target PC using the agent command and required options
-4. Start the web UI on the controller using the webui command and required options
+This creates `keys/private.pem` and `keys/public.pem`. The private key stays on the controller, the public key goes to the target PC.
+
+### Step 2: Start the agent on the TARGET PC
+
+The target PC is the machine you want to wake/shutdown remotely.
+
+```bash
+python nanowol.py agent --mac AA:BB:CC:DD:EE:FF --public-key ./keys/public.pem
+```
+
+Replace `AA:BB:CC:DD:EE:FF` with the target PC's MAC address.
+Find it with `ipconfig /all` (Windows) or `ip link` (Linux).
+
+### Step 3: Control from the CONTROLLER machine
+
+The controller is where you send commands from.
+
+**Option A: Web UI (recommended)**
+
+```bash
+python nanowol.py webui --target http://TARGET_IP:5000 --mac AA:BB:CC:DD:EE:FF --password yourpassword
+```
+
+Then open `http://localhost:5050` in your browser.
+
+**Option B: CLI commands**
+
+Wake a machine:
+```bash
+python nanowol.py wake --mac AA:BB:CC:DD:EE:FF
+```
+
+Shutdown a machine:
+```bash
+python nanowol.py shutdown --target http://TARGET_IP:5000
+```
+
+### Step 4 (optional): Install as service on TARGET PC
+
+```bash
+python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
+```
+
+This starts the agent automatically on boot (Windows) or login (Linux/macOS).
+
+### Example with real values
+
+Target PC:
+- IP: `192.168.0.50`
+- MAC: `1C:69:7A:AB:CD:EF`
+
+On target PC:
+```bash
+python nanowol.py agent --mac 1C:69:7A:AB:CD:EF
+```
+
+On controller:
+```bash
+python nanowol.py webui --target http://192.168.0.50:5000 --mac 1C:69:7A:AB:CD:EF --password secret123
+```
 
 ## Project structure
 
