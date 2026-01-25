@@ -1,5 +1,5 @@
 # ============================================
-# WhereWOL Configuration Example
+# NanoWOL Configuration Example
 # ============================================
 # Copy this file to config.yaml and customize.
 # NOTE: This file is for documentation purposes.
@@ -17,8 +17,8 @@ agent:
 webui:
   host: "0.0.0.0"
   port: 5050
-  # Password: Set via WHEREWOL_PASSWORD environment variable
-  # Example: export WHEREWOL_PASSWORD="your-secure-password"
+  # Password: Set via NANOWOL_PASSWORD environment variable
+  # Example: export NANOWOL_PASSWORD="your-secure-password"
 
 # Key paths
 keys:

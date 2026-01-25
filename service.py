@@ -13,6 +13,7 @@ import os
 import sys
 import subprocess
 import logging
+import shutil
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -227,7 +228,9 @@ WantedBy=default.target
     
     # Enable and start
     subprocess.run(["systemctl", "--user", "daemon-reload"])
-    result = subprocess.run(["systemctl", "--user", "enable", SERVICE_NAME.lower()])
+    result = subprocess.run(["systemctl", "--user", "enable", "--now", SERVICE_NAME.lower()])
+    if shutil.which("loginctl"):
+        subprocess.run(["loginctl", "enable-linger", str(os.getuid())], capture_output=True)
     
     if result.returncode == 0:
         logger.info(f"Linux service '{SERVICE_NAME}' installed")
@@ -241,7 +244,7 @@ def uninstall_linux_service() -> bool:
         return False
     
     subprocess.run(["systemctl", "--user", "stop", SERVICE_NAME.lower()])
-    subprocess.run(["systemctl", "--user", "disable", SERVICE_NAME.lower()])
+    subprocess.run(["systemctl", "--user", "disable", "--now", SERVICE_NAME.lower()])
     
     service_file = get_systemd_user_dir() / f"{SERVICE_NAME.lower()}.service"
     if service_file.exists():
@@ -322,7 +325,10 @@ def install_macos_service(mac_address: str, public_key: str = "./keys/public.pem
     plist_file = launch_dir / "com.nano.wol.agent.plist"
     plist_file.write_text(plist_content)
     
-    result = subprocess.run(["launchctl", "load", str(plist_file)])
+    uid = os.getuid()
+    result = subprocess.run(["launchctl", "bootstrap", f"gui/{uid}", str(plist_file)], capture_output=True)
+    if result.returncode != 0:
+        result = subprocess.run(["launchctl", "load", str(plist_file)], capture_output=True)
     
     if result.returncode == 0:
         logger.info(f"macOS agent '{SERVICE_NAME}' installed")
@@ -338,7 +344,10 @@ def uninstall_macos_service() -> bool:
     plist_file = get_launchd_dir() / "com.nano.wol.agent.plist"
     
     if plist_file.exists():
-        subprocess.run(["launchctl", "unload", str(plist_file)])
+        uid = os.getuid()
+        result = subprocess.run(["launchctl", "bootout", f"gui/{uid}", str(plist_file)], capture_output=True)
+        if result.returncode != 0:
+            subprocess.run(["launchctl", "unload", str(plist_file)], capture_output=True)
         plist_file.unlink()
         logger.info(f"macOS agent '{SERVICE_NAME}' removed")
         return True

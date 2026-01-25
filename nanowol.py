@@ -129,6 +129,9 @@ def wake(target: str):
         if resp.status_code == 200:
             result = resp.json()
             click.echo(click.style(f"Success: {result.get('status', 'OK')}", fg="green"))
+            warning = result.get("warning")
+            if warning:
+                click.echo(click.style(f"Warning: {warning}", fg="yellow"))
         else:
             result = resp.json()
             click.echo(click.style(f"Error: {result.get('error', 'Failed')}", fg="red"))

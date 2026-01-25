@@ -35,7 +35,8 @@ def create_webui_app(agent_url: str, private_key_path: Path, password: str, targ
     Returns:
         Flask application instance
     """
-    app = Flask(__name__, template_folder='templates')
+    template_dir = Path(__file__).parent / "templates"
+    app = Flask(__name__, template_folder=str(template_dir))
     
     # Load private key for signing shutdown commands
     private_key = None
@@ -82,6 +83,9 @@ def create_webui_app(agent_url: str, private_key_path: Path, password: str, targ
                     if resp.status_code == 200:
                         result = resp.json()
                         message = f"Success: {result.get('status', 'OK')}"
+                        warning = result.get("warning")
+                        if warning:
+                            message = f"{message} (Warning: {warning})"
                     else:
                         error = True
                         result = resp.json()

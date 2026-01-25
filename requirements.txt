@@ -1,4 +1,4 @@
-# WhereWOL - Dependencies
+# NanoWOL - Dependencies
 # Install with: pip install -r requirements.txt
 
 flask>=3.0.0

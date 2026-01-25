@@ -1,8 +1,8 @@
 # NanoWOL
 
-**Secure Remote Wake-on-LAN & Shutdown Controller**
+Secure Remote Wake on LAN and Shutdown Controller
 
-NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA authentication. Part of the **Nano Product Family**.
+NanoWOL is a lightweight command line and web tool for remote PC power management with RSA authentication. It is part of the Nano Product Family.
 
 ![Python](https://img.shields.io/badge/Made%20with-Python-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
@@ -12,325 +12,142 @@ NanoWOL is a lightweight CLI/Web tool for remote PC power management with RSA au
 
 ## Features
 
-* **Secure Authentication:** RSA-2048 signed commands prevent unauthorized shutdowns
-* **Wake-on-LAN:** Send magic packets to wake remote machines
-* **Remote Shutdown:** Signed shutdown commands with optional port blocking
-* **Auto-Start Service:** Agent can run as a system service (starts on boot, no login required)
-* **Web UI:** Cyberpunk-styled control panel accessible from any browser
-* **CLI Tool:** Full command-line interface for scripting
-* **Cross-Platform:** Windows (Task Scheduler), Linux (systemd), macOS (launchd)
-* **Modular:** Clean separation into crypto, WOL, agent, service, and webui modules
-* **Unit Tested:** 12 tests covering crypto, WOL, and service functionality
+1. Secure authentication with RSA 2048 signatures for shutdown commands
+2. Wake on LAN magic packets
+3. Remote shutdown with optional port blocking
+4. Service mode for automatic startup
+5. Web UI control panel
+6. Command line interface for scripts
+7. Cross platform support for Windows, Linux, and macOS
+8. Modular design across crypto, WOL, agent, service, and web UI modules
+9. Unit tests for crypto, WOL, and service functionality
 
-> **Note:** Primarily tested on Windows. Linux/macOS should work but feedback welcome!
+Note: primarily tested on Windows. Linux and macOS should work but feedback is welcome.
 
-## Use Cases
+## Use cases
 
-### IT Admin / Office Management
-Deploy NanoWOL agent on all company workstations. Admin can remotely:
-- **Wake** machines before work hours for updates
-- **Shutdown** all PCs at end of day (save power!)
-- No need to walk through the building
+### IT admin and office management
 
-**One-time setup (per machine):**
-```powershell
-# Run as Administrator on each workstation
-python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
-```
+Deploy the NanoWOL agent on workstations so an admin can wake or shut down machines remotely. This saves time and reduces power usage.
 
-**Daily admin scripts:**
-```powershell
-# wake_all.ps1 - Wake all office PCs
-$computers = @(
-    "http://192.168.0.101:5000",
-    "http://192.168.0.102:5000",
-    "http://192.168.0.103:5000"
-    # Add all workstation IPs...
-)
+### Home lab and server room
 
-foreach ($pc in $computers) {
-    Write-Host "Waking $pc..."
-    python nanowol.py wake --target $pc
-}
-```
+Wake a NAS or home server before access and shut it down after a backup job completes.
 
-```powershell
-# shutdown_all.ps1 - Shutdown all office PCs
-foreach ($pc in $computers) {
-    Write-Host "Shutting down $pc..."
-    python nanowol.py shutdown --target $pc
-}
-```
+### Remote work
 
-**Schedule with Task Scheduler:**
-- Wake script at 7:00 AM
-- Shutdown script at 6:00 PM
+If a home PC is left running, shut it down remotely. If a file is needed, wake the machine, access it, then shut it down.
 
-### Home Lab / Server Room
-- Wake your NAS or home server remotely before accessing files
-- Shutdown after backup is complete
-- Control from phone via WebUI
+### Energy saving
 
-### Remote Work
-- Left your home PC on? Shutdown remotely
-- Need a file from home? Wake it, grab it, shut it down
-
-### Energy Saving
-- Scheduled shutdowns at night via scripts
-- Wake only when needed instead of 24/7 operation
+Schedule regular shutdowns and only wake systems when needed.
 
 ## Requirements
 
-* Python 3.8+
-* Dependencies: `click`, `flask`, `cryptography`, `requests`
+1. Python 3.8 or later
+2. Dependencies: click, flask, cryptography, requests
 
 ## Installation
 
-```bash
-# Clone repository
-git clone https://github.com/goAuD/NanoWOL.git
-cd NanoWOL
+1. Clone the repository
 
-# Install dependencies
-pip install -r requirements.txt
-```
+   ```bash
+   git clone https://github.com/goAuD/NanoWOL.git
+   ```
+2. Open the project folder
 
-## Quick Start
+   ```bash
+   cd NanoWOL
+   ```
+3. Install dependencies using pip and the requirements file
 
-### 1. Generate Keys
-```bash
-python nanowol.py keygen
-```
+## Quick start
 
-### 2. Install as Service (Recommended)
-```bash
-# On target PC - installs agent to start on boot (no login required)
-python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
-```
+1. Generate keys
 
-### 3. Or Start Agent Manually
-```bash
-# Copy public.pem to target PC, then:
-python nanowol.py agent --mac AA:BB:CC:DD:EE:FF --public-key ./keys/public.pem
-```
+   ```bash
+   python nanowol.py keygen
+   ```
+2. Run the help to view required options for each command
 
-### 4. Start Web UI (on controller)
-```bash
-python nanowol.py webui --target http://192.168.0.50:5000
-```
+   ```bash
+   python nanowol.py
+   ```
+3. Start the agent on the target PC using the agent command and required options
+4. Start the web UI on the controller using the webui command and required options
 
-### 5. CLI Commands
-```bash
-# Wake
-python nanowol.py wake --target http://192.168.0.50:5000
+## Project structure
 
-# Shutdown
-python nanowol.py shutdown --target http://192.168.0.50:5000
+1. nanowol.py CLI entry point
+2. crypto.py RSA key operations
+3. wol.py Wake on LAN logic
+4. agent.py Agent Flask server
+5. webui.py Web UI Flask server
+6. service.py Cross platform service installation
+7. templates index.html Web UI template
+8. test_nanowol.py Unit tests
+9. requirements.txt Dependencies
 
-# Check service status
-python nanowol.py service-status
-```
+## Service installation
 
-## Project Structure (v1.2.0)
+The agent can install itself as a user service on Linux and macOS, and as a scheduled task on Windows. User services run when the user session is active. To start at boot without login on Linux, enable user lingering with the system login manager. On macOS, starting at boot without login requires a system launch daemon, which is not covered here.
 
-```
-NanoWOL/
-├── nanowol.py         # CLI entry point
-├── crypto.py          # RSA key operations
-├── wol.py             # Wake-on-LAN logic
-├── agent.py           # Agent Flask server
-├── webui.py           # Web UI Flask server
-├── service.py         # Cross-platform service installation
-├── templates/
-│   └── index.html     # Cyberpunk web template
-├── test_nanowol.py    # Unit tests (12 tests)
-└── requirements.txt   # Dependencies
-```
+## Running tests
 
-## Service Installation
-
-NanoWOL can install itself as a system service to auto-start on boot:
-
-| Platform | Method | Requires Login |
-|----------|--------|----------------|
-| Windows | Task Scheduler (Boot trigger) | No |
-| Linux | systemd user service | No |
-| macOS | launchd user agent | No |
-
-```bash
-# Install
-python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF
-
-# Uninstall
-python nanowol.py uninstall-service
-
-# Check status
-python nanowol.py service-status
-```
-
-## Running Tests
-
-```bash
-python test_nanowol.py
-# or
-python -m pytest test_nanowol.py -v
-```
+Run pytest in your Python environment against test_nanowol.py.
 
 ## Security
 
-* RSA-2048 signatures for shutdown commands
-* Password-protected Web UI
-* Optional firewall port blocking after shutdown
-* Self-hosted, no cloud account or external service required
+1. RSA 2048 signatures for shutdown commands
+2. Password protected Web UI
+3. Optional firewall port blocking after shutdown
+4. Self hosted with no external services required
 
-> **Note:** NanoWOL works natively on LAN. For remote access over the internet, use VPN or Tailscale to connect to your network first.
+Note: NanoWOL is designed for LAN use. For internet access, use a VPN solution.
+
+## Linux and macOS operational notes
+
+This section explains how to run the agent reliably on Linux and macOS, including WSL usage.
+
+1. Shutdown permissions
+   On Linux and macOS the shutdown command requires elevated permissions. Use a sudoers rule that allows only the shutdown command without a password.
+
+   ```bash
+   sudo visudo
+   ```
+
+   ```
+   youruser ALL=NOPASSWD:/sbin/shutdown
+   ```
+
+2. Service behavior on Linux
+   The Linux service is installed as a user service. It runs when your user session is active. To start at boot without login, enable user lingering for your account using the system login manager.
+
+3. Service behavior on macOS
+   The macOS agent runs as a launchd user agent. It starts when you log in to your user session. To run at boot without login you need a system launch daemon, which is a different setup.
+
+4. WSL behavior
+   WSL is not a full Linux boot environment. Service managers may behave differently and shutdown will not power off Windows. Use WSL for development or testing.
 
 ## FAQ
 
-### Why do I need NanoWOL? I can just run `shutdown` on my PC!
+### Why do I need NanoWOL
 
-Yes, but **you need to be sitting at your PC** to do that. NanoWOL is for **remote** power management:
+A local shutdown command works only when you are at the machine. NanoWOL is for remote power management and secure authentication, with the ability to wake a machine that is fully off.
 
-| Situation | Simple `shutdown` | NanoWOL |
-|-----------|-------------------|---------|
-| Sitting at your PC | ✅ Works fine | Overkill |
-| Want to shut down remotely | ❌ Not possible | ✅ That's the point |
-| Want to **turn ON** remotely | ❌ Impossible | ✅ Wake-on-LAN |
-| Need secure authentication | ❌ Depends on RDP/SSH | ✅ RSA-2048 signed |
+### What is Wake on LAN
 
-**Real scenarios:**
-- Left your home PC running? Shut it down from your phone
-- Need a file from home? Wake PC → RDP in → grab file → shut down
-- IT admin with 50 office PCs? Script wake/shutdown instead of walking around
+Wake on LAN is a hardware feature that allows a powered off PC to start when it receives a special magic packet on the network. The network adapter listens for that packet while the system is off.
 
-### What is Wake-on-LAN (WOL)?
+Requirements include WOL enabled in BIOS, wake on magic packet enabled in the network adapter, an Ethernet connection, and power to the machine.
 
-Wake-on-LAN is a hardware feature that allows you to **turn on a completely powered-off PC** by sending a special "magic packet" over the network. The network card stays in low-power mode and listens for this packet even when the PC is off.
+### Why not use SSH and a shutdown command
 
-**Requirements:**
-- WOL enabled in BIOS
-- "Wake on Magic Packet" enabled in network adapter settings
-- Ethernet connection (WiFi WOL rarely works)
-- PC plugged into power
+SSH gives full shell access and requires credentials. NanoWOL limits the agent to wake and shutdown only, and uses signed commands so a password is not transmitted.
 
-### Why not just use SSH + `shutdown` command?
+### Is this a security risk
 
-You could, but:
-
-| Aspect | SSH + shutdown | NanoWOL |
-|--------|----------------|---------|
-| Can wake PC? | ❌ No | ✅ Yes |
-| Needs credentials? | Yes (password/key) | No (RSA signature) |
-| Password travels over network? | Yes | No |
-| Setup complexity | SSH server + keys | One command |
-| Attack surface | Full shell access | Only wake/shutdown |
-
-With SSH, you're giving **full shell access**. With NanoWOL, the agent can **only** wake or shutdown – nothing else.
-
-### Is this a security risk?
-
-**No, it's designed to be secure:**
-
-- Shutdown commands require **RSA-2048 signatures**
-- The agent only accepts commands signed with the matching private key
-- Your private key **never leaves your controller** – only the public key is on target PCs
-- No passwords transmitted over network
-- Self-hosted, no cloud account or external service required
-- Optional: firewall blocks the port after shutdown
-
-**Worst case scenario:** Someone sends a WOL packet → Your PC turns on. That's it. They can't shut it down without your private key.
-
-### Does Wake-on-LAN work over WiFi?
-
-**Rarely.** Most WiFi adapters disable their radio completely when the PC is off (to save power), so they can't receive the magic packet.
-
-**Recommendation:** Use Ethernet for reliable WOL. This is a hardware limitation, not a NanoWOL issue.
-
-### Can I use this over the internet?
-
-**Not directly** – WOL uses UDP broadcast which doesn't route over the internet. Options:
-
-1. **VPN:** Connect to your home network via VPN, then use NanoWOL normally
-2. **Always-on device:** Have a Raspberry Pi or NAS running the agent 24/7, use it to wake other PCs
-
-### What's the typical home use case?
-
-1. **Gaming PC:** Wake it remotely so it's booted up by the time you get home
-2. **Energy saving:** Don't run your PC 24/7, wake only when needed
-3. **Media server/NAS:** Start on demand, shut down after use
-4. **"Oops" moments:** Forgot to turn off your PC? Fix it from anywhere
-
-### What's the typical IT/office use case?
-
-```powershell
-# 7:00 AM - Wake all workstations before staff arrives
-foreach ($pc in $workstations) { python nanowol.py wake --target $pc }
-
-# 6:00 PM - Shutdown everything (save power!)
-foreach ($pc in $workstations) { python nanowol.py shutdown --target $pc }
-```
-
-Schedule with Task Scheduler → Zero manual work, automatic energy savings.
-
-## Troubleshooting
-
-### Agent not reachable (Connection Timeout)
-
-**Symptom:** `HTTPConnectionPool... Max retries exceeded`
-
-**Solutions:**
-1. **Check agent is running on target PC:**
-   ```powershell
-   netstat -an | findstr :5000
-   # Should show: TCP 0.0.0.0:5000 LISTENING
-   ```
-
-2. **Open firewall on target PC (Admin PowerShell):**
-   ```powershell
-   New-NetFirewallRule -DisplayName "NanoWOL Agent" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
-   ```
-
-3. **Test connectivity from controller:**
-   ```powershell
-   Test-NetConnection -ComputerName 192.168.0.50 -Port 5000
-   ```
-
-### Wake-on-LAN not working
-
-**Checklist:**
-- [ ] BIOS: Wake-on-LAN enabled
-- [ ] Network adapter: "Wake on Magic Packet" enabled (Device Manager → Network Adapter → Properties → Power Management)
-- [ ] PC plugged into power (not battery)
-- [ ] Ethernet cable connected (WiFi WOL rarely works)
-- [ ] Same LAN/subnet as controller
-
-**Test WOL manually:**
-```powershell
-python nanowol.py wake --target http://192.168.0.50:5000
-```
-
-### Service not starting after boot
-
-**Check service status:**
-```powershell
-python nanowol.py service-status
-schtasks /query /tn "NanoWOL-Agent" /v
-```
-
-**Manually start the task:**
-```powershell
-schtasks /run /tn "NanoWOL-Agent"
-```
-
-**Reinstall with admin mode (starts before login):**
-```powershell
-# Run as Administrator
-python nanowol.py install-service --mac AA:BB:CC:DD:EE:FF --admin
-```
-
-### Unicode/Encoding errors on non-English Windows
-
-Upgrade to latest version - encoding issues have been fixed for Hungarian and other non-English Windows systems.
+NanoWOL uses RSA 2048 signatures for shutdown commands. The private key stays on the controller. The agent accepts only requests signed by the matching key. This reduces the attack surface compared to a general remote shell.
 
 ## Part of Nano Product Family
 
@@ -339,4 +156,3 @@ This tool uses the [Nano Design System](https://github.com/goAuD/NanoServer/blob
 ## License
 
 MIT License
-
