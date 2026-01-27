@@ -13,13 +13,13 @@ from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify
 
-from crypto import load_public_key, verify_signature
+from crypto import load_public_key, verify_signature, verify_signed_payload
 from wol import send_wol_packet
+from version import VERSION
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_AGENT_PORT = 5000
-VERSION = "1.2.0"
 
 
 def create_agent_app(mac_address: str, public_key_path: Path, shutdown_delay: int = 5) -> Flask:
@@ -43,6 +43,9 @@ def create_agent_app(mac_address: str, public_key_path: Path, shutdown_delay: in
     # Load public key for signature verification
     public_key = load_public_key(public_key_path)
     
+    # Used nonces for replay protection (in-memory, clears on restart)
+    used_nonces = set()
+    
     @app.route("/health", methods=["GET"])
     def health():
         """Health check endpoint."""
@@ -65,17 +68,29 @@ def create_agent_app(mac_address: str, public_key_path: Path, shutdown_delay: in
     
     @app.route("/shutdown", methods=["POST"])
     def shutdown():
-        """Initiate shutdown with RSA signature verification."""
+        """Initiate shutdown with RSA signature verification and replay protection."""
         try:
             data = request.get_json() or {}
-            signature = data.get("signature", "")
             close_port = data.get("close_port", False)
             
-            # Verify signature
-            message = b"shutdown"
-            if not verify_signature(message, signature, public_key):
-                logger.warning("Invalid signature received for shutdown")
-                return jsonify({"error": "Invalid signature"}), 403
+            # Check for new payload format (with replay protection)
+            if "payload" in data:
+                # New format with timestamp + nonce
+                is_valid, error = verify_signed_payload(
+                    data, public_key, "shutdown",
+                    max_age_seconds=60,
+                    used_nonces=used_nonces
+                )
+                if not is_valid:
+                    logger.warning(f"Shutdown rejected: {error}")
+                    return jsonify({"error": error}), 403
+            else:
+                # Legacy format (backward compatible)
+                signature = data.get("signature", "")
+                message = b"shutdown"
+                if not verify_signature(message, signature, public_key):
+                    logger.warning("Invalid signature received for shutdown")
+                    return jsonify({"error": "Invalid signature"}), 403
             
             logger.info("Valid shutdown command received")
 

@@ -11,11 +11,11 @@ from flask import Flask, request, render_template
 
 from crypto import load_private_key, sign_message
 from wol import send_wol_packet
+from version import VERSION
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_WEBUI_PORT = 5050
-VERSION = "1.2.0"
 
 
 def create_webui_app(agent_url: str, private_key_path: Path, password: str, target_mac: str = None) -> Flask:
@@ -69,14 +69,17 @@ def create_webui_app(agent_url: str, private_key_path: Path, password: str, targ
                     
                 elif action == "shutdown":
                     import requests as req
+                    from crypto import create_signed_payload
                     
                     if not private_key:
                         raise ValueError("Private key not found. Run 'nanowol keygen' first.")
                     
-                    signature = sign_message(b"shutdown", private_key)
+                    # Use replay-protected payload
+                    signed_data = create_signed_payload("shutdown", private_key)
+                    signed_data["close_port"] = close_port
                     resp = req.post(
                         f"{agent_url}/shutdown",
-                        json={"signature": signature, "close_port": close_port},
+                        json=signed_data,
                         timeout=10
                     )
                     
@@ -98,7 +101,7 @@ def create_webui_app(agent_url: str, private_key_path: Path, password: str, targ
                 message = f"Error: {str(e)}"
                 logger.error(f"WebUI action failed: {e}")
         
-        return render_template("index.html", message=message, error=error)
+        return render_template("index.html", message=message, error=error, version=VERSION)
     
     return app
 

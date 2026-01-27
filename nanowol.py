@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 NanoWOL – Secure Remote Wake-on-LAN & Shutdown Controller
-Version 1.2.0 | Part of the Nano Product Family
+Version 1.2.2 | Part of the Nano Product Family
 
 A modular CLI tool for remote PC power management with RSA authentication.
 
@@ -31,11 +31,12 @@ from pathlib import Path
 import click
 
 # Import from modules
-from crypto import generate_key_pair, load_private_key, sign_message
+from crypto import generate_key_pair, load_private_key, sign_message, create_signed_payload
 from wol import send_wol_packet
 from agent import create_agent_app, DEFAULT_AGENT_PORT
 from webui import create_webui_app, generate_password, DEFAULT_WEBUI_PORT
 from service import install_service, uninstall_service, get_service_status, get_platform_name
+from version import VERSION
 
 # Configure logging
 logging.basicConfig(
@@ -43,8 +44,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-VERSION = "1.2.0"
 
 
 # =============================================================================
@@ -160,11 +159,13 @@ def shutdown(target: str, private_key: str, close_port: bool):
     
     try:
         key = load_private_key(private_key_path)
-        signature = sign_message(b"shutdown", key)
+        # Use replay-protected payload
+        signed_data = create_signed_payload("shutdown", key)
+        signed_data["close_port"] = close_port
         
         resp = req.post(
             f"{target}/shutdown",
-            json={"signature": signature, "close_port": close_port},
+            json=signed_data,
             timeout=10
         )
         

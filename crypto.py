@@ -138,3 +138,107 @@ def verify_signature(message: bytes, signature_hex: str, public_key) -> bool:
         logger.warning("Signature verification failed")
         return False
 
+
+# =============================================================================
+# REPLAY PROTECTION
+# =============================================================================
+
+import json
+import secrets
+
+def create_signed_payload(action: str, private_key) -> dict:
+    """
+    Create a signed payload with timestamp and nonce for replay protection.
+    
+    Args:
+        action: Action name (e.g., "shutdown")
+        private_key: RSA private key for signing
+        
+    Returns:
+        Dict with payload, signature, timestamp, and nonce
+    """
+    import time
+    
+    timestamp = int(time.time())
+    nonce = secrets.token_hex(16)
+    
+    payload = {
+        "action": action,
+        "timestamp": timestamp,
+        "nonce": nonce
+    }
+    
+    # Sign the JSON payload
+    payload_bytes = json.dumps(payload, sort_keys=True).encode()
+    signature = sign_message(payload_bytes, private_key)
+    
+    return {
+        "payload": payload,
+        "signature": signature
+    }
+
+
+def verify_signed_payload(
+    data: dict, 
+    public_key, 
+    expected_action: str,
+    max_age_seconds: int = 60,
+    used_nonces: set = None
+) -> tuple:
+    """
+    Verify a signed payload with replay protection.
+    
+    Args:
+        data: Dict containing 'payload' and 'signature'
+        public_key: RSA public key for verification
+        expected_action: Expected action in payload
+        max_age_seconds: Maximum age of timestamp (default 60s)
+        used_nonces: Set of previously used nonces (for replay detection)
+        
+    Returns:
+        Tuple of (is_valid: bool, error_message: str or None)
+    """
+    import time
+    
+    try:
+        payload = data.get("payload", {})
+        signature = data.get("signature", "")
+        
+        if not payload or not signature:
+            return False, "Missing payload or signature"
+        
+        action = payload.get("action")
+        timestamp = payload.get("timestamp", 0)
+        nonce = payload.get("nonce", "")
+        
+        # Verify action
+        if action != expected_action:
+            return False, f"Invalid action: expected {expected_action}"
+        
+        # Verify timestamp (not too old)
+        current_time = int(time.time())
+        if current_time - timestamp > max_age_seconds:
+            return False, f"Payload expired (max age: {max_age_seconds}s)"
+        
+        # Verify timestamp (not in future)
+        if timestamp > current_time + 5:  # Allow 5s clock skew
+            return False, "Payload timestamp in future"
+        
+        # Check nonce reuse
+        if used_nonces is not None:
+            if nonce in used_nonces:
+                return False, "Nonce already used (replay attack)"
+            used_nonces.add(nonce)
+        
+        # Verify signature
+        payload_bytes = json.dumps(payload, sort_keys=True).encode()
+        if not verify_signature(payload_bytes, signature, public_key):
+            return False, "Invalid signature"
+        
+        return True, None
+        
+    except Exception as e:
+        logger.error(f"Payload verification error: {e}")
+        return False, str(e)
+
+

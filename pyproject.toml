@@ -1,11 +1,11 @@
 [project]
-name = "wherewol"
-version = "1.0.0"
+name = "nanowol"
+version = "1.2.2"
 description = "Secure remote Wake-on-LAN & shutdown controller with RSA authentication"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "goAuD"}
 ]
 keywords = ["wake-on-lan", "wol", "remote", "shutdown", "power-management", "rsa", "security"]
 classifiers = [
@@ -41,19 +41,19 @@ dev = [
 ]
 
 [project.scripts]
-wherewol = "wherewol:cli"
+nanowol = "nanowol:cli"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/wherewol"
-Repository = "https://github.com/yourusername/wherewol"
-Issues = "https://github.com/yourusername/wherewol/issues"
+Homepage = "https://github.com/goAuD/NanoWOL"
+Repository = "https://github.com/goAuD/NanoWOL"
+Issues = "https://github.com/goAuD/NanoWOL/issues"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["wherewol"]
+py-modules = ["nanowol", "agent", "webui", "crypto", "wol", "service", "version"]
 
 [tool.black]
 line-length = 100
@@ -64,3 +64,4 @@ line-length = 100
 target-version = "py39"
 select = ["E", "F", "W", "I", "UP", "B", "C4"]
 ignore = ["E501"]
+

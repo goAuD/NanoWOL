@@ -44,7 +44,7 @@ Schedule regular shutdowns and only wake systems when needed.
 
 ## Requirements
 
-1. Python 3.8 or later
+1. Python 3.9 or later
 2. Dependencies: click, flask, cryptography, requests
 
 ## Installation
@@ -154,10 +154,11 @@ Run pytest in your Python environment against test_nanowol.py.
 
 ## Security
 
-1. RSA 2048 signatures for shutdown commands
+1. RSA 2048 signatures for shutdown commands (timestamp + nonce replay protection)
 2. Password protected Web UI
 3. Optional firewall port blocking after shutdown
 4. Self hosted with no external services required
+5. Private key is stored unencrypted by default (controller side) — protect it like a password
 
 Note: NanoWOL is designed for LAN use. For internet access, use a VPN solution.
 
