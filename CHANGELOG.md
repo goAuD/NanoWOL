@@ -4,6 +4,23 @@ All notable changes to NanoWOL will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.3] - 2026-01-31
+
+### Security
+- **BREAKING:** `/wol` endpoint now requires signed payload authentication.
+- **BREAKING:** Legacy `/shutdown` signature format removed (use payload with timestamp + nonce).
+- Nonce DoS vulnerability fixed: nonces added only after successful signature verification.
+- Nonce cache limited to 10,000 entries (auto-clear on overflow).
+
+### Changed
+- All authenticated endpoints now use same `create_signed_payload()` mechanism.
+
+### Notes
+- Security fixes generated via NanoForge + Codex Security Auditor pipeline.
+- All unit tests passed.
+
+---
+
 ## [1.2.2] - 2026-01-27
 
 ### Added

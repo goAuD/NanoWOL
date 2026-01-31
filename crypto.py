@@ -224,16 +224,24 @@ def verify_signed_payload(
         if timestamp > current_time + 5:  # Allow 5s clock skew
             return False, "Payload timestamp in future"
         
-        # Check nonce reuse
+        # Check nonce reuse BEFORE verification (but don't add yet)
         if used_nonces is not None:
             if nonce in used_nonces:
                 return False, "Nonce already used (replay attack)"
-            used_nonces.add(nonce)
         
-        # Verify signature
+        # Verify signature FIRST
         payload_bytes = json.dumps(payload, sort_keys=True).encode()
         if not verify_signature(payload_bytes, signature, public_key):
             return False, "Invalid signature"
+        
+        # Only add nonce AFTER successful verification (prevents DoS)
+        if used_nonces is not None:
+            # Cleanup old nonces (simple TTL: keep max 10000)
+            if len(used_nonces) > 10000:
+                # Clear oldest half (since set doesn't track order, just clear all)
+                used_nonces.clear()
+                logger.info("Nonce cache cleared (size limit reached)")
+            used_nonces.add(nonce)
         
         return True, None
         

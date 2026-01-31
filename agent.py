@@ -57,8 +57,24 @@ def create_agent_app(mac_address: str, public_key_path: Path, shutdown_delay: in
     
     @app.route("/wol", methods=["POST"])
     def wol():
-        """Send Wake-on-LAN packet (to wake another machine from this agent)."""
+        """Send Wake-on-LAN packet (requires signed payload for authentication)."""
         try:
+            data = request.get_json() or {}
+            
+            # Require authentication via signed payload
+            if "payload" not in data:
+                logger.warning("WOL rejected: no payload")
+                return jsonify({"error": "Authentication required. Use signed payload."}), 401
+            
+            is_valid, error = verify_signed_payload(
+                data, public_key, "wol",
+                max_age_seconds=60,
+                used_nonces=used_nonces
+            )
+            if not is_valid:
+                logger.warning(f"WOL rejected: {error}")
+                return jsonify({"error": error}), 403
+            
             send_wol_packet(mac_address)
             logger.info(f"WOL packet sent for {mac_address}")
             return jsonify({"status": "WOL packet sent", "mac": mac_address}), 200
@@ -73,24 +89,20 @@ def create_agent_app(mac_address: str, public_key_path: Path, shutdown_delay: in
             data = request.get_json() or {}
             close_port = data.get("close_port", False)
             
-            # Check for new payload format (with replay protection)
-            if "payload" in data:
-                # New format with timestamp + nonce
-                is_valid, error = verify_signed_payload(
-                    data, public_key, "shutdown",
-                    max_age_seconds=60,
-                    used_nonces=used_nonces
-                )
-                if not is_valid:
-                    logger.warning(f"Shutdown rejected: {error}")
-                    return jsonify({"error": error}), 403
-            else:
-                # Legacy format (backward compatible)
-                signature = data.get("signature", "")
-                message = b"shutdown"
-                if not verify_signature(message, signature, public_key):
-                    logger.warning("Invalid signature received for shutdown")
-                    return jsonify({"error": "Invalid signature"}), 403
+            # Check for payload format (required - legacy format removed for security)
+            if "payload" not in data:
+                logger.warning("Shutdown rejected: legacy format not supported")
+                return jsonify({"error": "Legacy signature format removed. Use payload with timestamp and nonce."}), 400
+            
+            # Verify signed payload with replay protection
+            is_valid, error = verify_signed_payload(
+                data, public_key, "shutdown",
+                max_age_seconds=60,
+                used_nonces=used_nonces
+            )
+            if not is_valid:
+                logger.warning(f"Shutdown rejected: {error}")
+                return jsonify({"error": error}), 403
             
             logger.info("Valid shutdown command received")
 
